@@ -1,5 +1,7 @@
 package com.umsign.app;
 
+import com.sun.net.httpserver.BasicAuthenticator;
+import com.sun.net.httpserver.HttpContext;
 import com.sun.net.httpserver.HttpServer;
 import io.vavr.collection.Array;
 
@@ -17,7 +19,7 @@ public class Appplication {
     public static void main(String[] args) throws IOException {
         int serverPort = 8000;
         HttpServer server = HttpServer.create(new InetSocketAddress(serverPort), 0);
-        server.createContext("/api/hello", httpExchange -> {
+        HttpContext httpContext = server.createContext("/api/hello", httpExchange -> {
             if("GET".equals(httpExchange.getRequestMethod())) {
                 Map<String, List<String>> params = splitQuery(httpExchange.getRequestURI().getRawQuery());
                 String noNameText = "Anonymous";
@@ -33,6 +35,13 @@ public class Appplication {
                 httpExchange.sendResponseHeaders(405, -1); // 405 Method Not Allowed
             }
 
+        });
+        httpContext.setAuthenticator(new BasicAuthenticator("myrealm") {
+            @Override
+            public boolean checkCredentials(String user, String pwd) {
+                //'admin:admin' -(Base64)-> 'YWRtaW46YWRtaW4=' ==>  -H 'Authorization: Basic YWRtaW46YWRtaW4='
+                return user.equals("admin") && pwd.equals("admin");
+            }
         });
         server.setExecutor(null);
         server.start();
