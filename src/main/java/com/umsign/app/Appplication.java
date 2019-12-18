@@ -3,22 +3,26 @@ package com.umsign.app;
 import com.sun.net.httpserver.BasicAuthenticator;
 import com.sun.net.httpserver.HttpContext;
 import com.sun.net.httpserver.HttpServer;
-import io.vavr.collection.Array;
+import com.umsign.app.api.RegistrationHandler;
 
 import java.io.IOException;
 import java.io.OutputStream;
 import java.net.InetSocketAddress;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
+import static com.umsign.app.Configuration.*;
 import static com.umsign.app.api.ApiUtils.splitQuery;
 
 public class Appplication {
     public static void main(String[] args) throws IOException {
         int serverPort = 8000;
         HttpServer server = HttpServer.create(new InetSocketAddress(serverPort), 0);
+
+        RegistrationHandler registrationHandler = new RegistrationHandler(getUserService(), getObjectMapper(), getErrorHandler());
+        server.createContext("/api/users/register", registrationHandler::handle);
+
         HttpContext httpContext = server.createContext("/api/hello", httpExchange -> {
             if("GET".equals(httpExchange.getRequestMethod())) {
                 Map<String, List<String>> params = splitQuery(httpExchange.getRequestURI().getRawQuery());
