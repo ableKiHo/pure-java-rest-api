@@ -1,11 +1,11 @@
 package com.umsign.app.api;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.sun.net.httpserver.Headers;
 import com.sun.net.httpserver.HttpExchange;
 import com.umsign.app.api.user.PasswordEncoder;
 import com.umsign.app.api.user.RegistrationRequest;
 import com.umsign.app.api.user.RegistrationResponse;
-import com.umsign.app.errors.ApplicationException;
 import com.umsign.app.errors.ApplicationExceptions;
 import com.umsign.app.errors.GlobalExceptionHandler;
 import com.umsign.app.errors.InvalidRequestException;
@@ -17,19 +17,24 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 
-public class RegistrationHandler {
+public abstract class Handler {
 
     private final ObjectMapper objectMapper;
-    private final UserService userService;
     private final GlobalExceptionHandler exceptionHandler;
 
-    public RegistrationHandler(UserService userService, ObjectMapper objectMapper,  GlobalExceptionHandler exceptionHandler) {
+    public Handler(ObjectMapper objectMapper, GlobalExceptionHandler exceptionHandler) {
         this.objectMapper = objectMapper;
-        this.userService = userService;
         this.exceptionHandler = exceptionHandler;
     }
 
-    public void handle(HttpExchange exchange) throws IOException {
+    public void handle(HttpExchange exchange) {
+        Try.run(() -> excute(exchange))
+                .onFailure(thr -> exceptionHandler.handle(thr, exchange));
+    }
+
+    protected abstract void excute(HttpExchange exchange) throws Exception;
+
+    /*public void handle(HttpExchange exchange) throws IOException {
         if(!exchange.getRequestMethod().equals("POST")) {
             exceptionHandler.handle(new UnsupportedOperationException(),exchange);
         }
@@ -56,7 +61,7 @@ public class RegistrationHandler {
         responseBody.write(response);
         responseBody.close();
 
-    }
+    }*/
 
     protected <T> T readRequest(InputStream is, Class<T> type){
         return Try.of(() -> objectMapper.readValue(is, type))
@@ -67,4 +72,12 @@ public class RegistrationHandler {
         return Try.of(() -> objectMapper.writeValueAsBytes(response))
                 .getOrElseThrow(ApplicationExceptions.invalidRequest());
     }
+
+    protected  static Headers getHeaders(String key, String value) {
+        Headers headers = new Headers();
+        headers.set(key, value);
+        return headers;
+    }
+
+
 }

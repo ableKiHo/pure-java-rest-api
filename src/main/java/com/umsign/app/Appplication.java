@@ -3,7 +3,8 @@ package com.umsign.app;
 import com.sun.net.httpserver.BasicAuthenticator;
 import com.sun.net.httpserver.HttpContext;
 import com.sun.net.httpserver.HttpServer;
-import com.umsign.app.api.RegistrationHandler;
+import com.umsign.app.api.Handler;
+import com.umsign.app.api.user.RegisterationHandler;
 
 import java.io.IOException;
 import java.io.OutputStream;
@@ -20,7 +21,7 @@ public class Appplication {
         int serverPort = 8000;
         HttpServer server = HttpServer.create(new InetSocketAddress(serverPort), 0);
 
-        RegistrationHandler registrationHandler = new RegistrationHandler(getUserService(), getObjectMapper(), getErrorHandler());
+        RegisterationHandler registrationHandler = new RegisterationHandler(getUserService(), getObjectMapper(), getErrorHandler());
         server.createContext("/api/users/register", registrationHandler::handle);
 
         HttpContext httpContext = server.createContext("/api/hello", httpExchange -> {
