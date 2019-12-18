@@ -1,10 +1,17 @@
 package com.umsign.app;
 
 import com.sun.net.httpserver.HttpServer;
+import io.vavr.collection.Array;
 
 import java.io.IOException;
 import java.io.OutputStream;
 import java.net.InetSocketAddress;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+
+import static com.umsign.app.api.ApiUtils.splitQuery;
 
 public class Appplication {
     public static void main(String[] args) throws IOException {
@@ -12,7 +19,10 @@ public class Appplication {
         HttpServer server = HttpServer.create(new InetSocketAddress(serverPort), 0);
         server.createContext("/api/hello", httpExchange -> {
             if("GET".equals(httpExchange.getRequestMethod())) {
-                String respText = "Hello!";
+                Map<String, List<String>> params = splitQuery(httpExchange.getRequestURI().getRawQuery());
+                String noNameText = "Anonymous";
+                String name = params.getOrDefault("name", Collections.singletonList(noNameText)).stream().findFirst().orElse(noNameText);
+                String respText = String.format("Hello %s!", name);
                 httpExchange.sendResponseHeaders(200, respText.getBytes().length); //response code and length
                 OutputStream outputStream = httpExchange.getResponseBody();
                 outputStream.write(respText.getBytes());
@@ -27,4 +37,6 @@ public class Appplication {
         server.setExecutor(null);
         server.start();
     }
+
+
 }
