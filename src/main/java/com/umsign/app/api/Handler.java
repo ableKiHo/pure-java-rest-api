@@ -16,6 +16,7 @@ import io.vavr.control.Try;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.Map;
 
 public abstract class Handler {
 
@@ -34,37 +35,14 @@ public abstract class Handler {
 
     protected abstract void excute(HttpExchange exchange) throws Exception;
 
-    /*public void handle(HttpExchange exchange) throws IOException {
-        if(!exchange.getRequestMethod().equals("POST")) {
-            exceptionHandler.handle(new UnsupportedOperationException(),exchange);
-        }
-        RegistrationRequest registrationRequest = null;
-        try {
-            registrationRequest = readRequest(exchange.getRequestBody(), RegistrationRequest.class);
-        }catch (Exception e) {
-            exceptionHandler.handle(new InvalidRequestException(400, e.getMessage()),exchange);
-        }
 
-        NewUser user = NewUser.builder()
-                .login(registrationRequest.getLogin())
-                .password(PasswordEncoder.encode(registrationRequest.getPassword()))
-                .build();
-
-        String userId = userService.create(user);
-
-        exchange.getResponseHeaders().set(Constants.CONTENT_TYPE, Constants.APPLICATION_JSON);
-        exchange.sendResponseHeaders(StatusCode.CREATED.getCode(), 0);
-
-        byte[] response = writeResponse(new RegistrationResponse(userId));
-
-        OutputStream responseBody = exchange.getResponseBody();
-        responseBody.write(response);
-        responseBody.close();
-
-    }*/
-
-    protected <T> T readRequest(InputStream is, Class<T> type){
+    protected <T> T readPostRequest(InputStream is, Class<T> type){
         return Try.of(() -> objectMapper.readValue(is, type))
+                .getOrElseThrow(ApplicationExceptions.invalidRequest());
+    }
+
+    protected <T> T readGetRequest(Map map, Class<T> type){
+        return Try.of(() -> objectMapper.convertValue(map, type))
                 .getOrElseThrow(ApplicationExceptions.invalidRequest());
     }
 

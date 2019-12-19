@@ -1,4 +1,4 @@
-package com.umsign.app.api.user;
+package com.umsign.app.api.user.handler;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.sun.net.httpserver.HttpExchange;
@@ -8,25 +8,25 @@ import com.umsign.app.api.ResponseEntity;
 import com.umsign.app.api.StatusCode;
 import com.umsign.app.errors.ApplicationExceptions;
 import com.umsign.app.errors.GlobalExceptionHandler;
-import com.umsign.domain.user.NewUser;
+import com.umsign.domain.user.User;
 import com.umsign.domain.user.UserService;
 
-import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.List;
 
-public class RegisterationHandler extends Handler {
+public class AllUserListHandler extends Handler {
     private final UserService userService;
 
-    public RegisterationHandler(UserService userService, ObjectMapper objectMapper, GlobalExceptionHandler exceptionHandler) {
+    public AllUserListHandler(UserService userService, ObjectMapper objectMapper, GlobalExceptionHandler exceptionHandler) {
         super(objectMapper, exceptionHandler);
         this.userService = userService;
     }
 
     @Override
     protected void excute(HttpExchange exchange) throws Exception {
-        byte[] response = null;
-        if("POST".equals(exchange.getRequestMethod())) {
-            ResponseEntity e = doPost(exchange.getRequestBody());
+        byte[] response;
+        if("GET".equals(exchange.getRequestMethod())) {
+            ResponseEntity e = doPost();
             exchange.getResponseHeaders().putAll(e.getHeaders());
             exchange.sendResponseHeaders(e.getStatusCode().getCode(), 0);
             response = super.writeResponse(e.getBody());
@@ -41,18 +41,10 @@ public class RegisterationHandler extends Handler {
         os.close();
     }
 
-    private ResponseEntity<RegistrationResponse> doPost(InputStream is) {
-        RegistrationRequest registerRequest = super.readRequest(is, RegistrationRequest.class);
+    private ResponseEntity<List<User>> doPost() {
+        List<User> users = userService.allUsers();
 
-        NewUser user = NewUser.builder()
-                .login(registerRequest.getLogin())
-                .password(PasswordEncoder.encode(registerRequest.getPassword()))
-                .build();
-
-        String userId = userService.create(user);
-
-        RegistrationResponse response = new RegistrationResponse(userId);
-        return new ResponseEntity<>(response, getHeaders(Constants.CONTENT_TYPE, Constants.APPLICATION_JSON), StatusCode.OK);
+        return new ResponseEntity<>(users, getHeaders(Constants.CONTENT_TYPE, Constants.APPLICATION_JSON), StatusCode.OK);
 
     }
 }

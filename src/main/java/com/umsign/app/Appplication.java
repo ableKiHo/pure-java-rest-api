@@ -3,8 +3,9 @@ package com.umsign.app;
 import com.sun.net.httpserver.BasicAuthenticator;
 import com.sun.net.httpserver.HttpContext;
 import com.sun.net.httpserver.HttpServer;
-import com.umsign.app.api.Handler;
-import com.umsign.app.api.user.RegisterationHandler;
+import com.umsign.app.api.user.handler.AllUserListHandler;
+import com.umsign.app.api.user.handler.FindUserHandler;
+import com.umsign.app.api.user.handler.RegisterationHandler;
 
 import java.io.IOException;
 import java.io.OutputStream;
@@ -14,6 +15,7 @@ import java.util.List;
 import java.util.Map;
 
 import static com.umsign.app.Configuration.*;
+import static com.umsign.app.api.ApiUtils.getQueryMap;
 import static com.umsign.app.api.ApiUtils.splitQuery;
 
 public class Appplication {
@@ -24,11 +26,17 @@ public class Appplication {
         RegisterationHandler registrationHandler = new RegisterationHandler(getUserService(), getObjectMapper(), getErrorHandler());
         server.createContext("/api/users/register", registrationHandler::handle);
 
+        AllUserListHandler allUserListHandler = new AllUserListHandler(getUserService(), getObjectMapper(), getErrorHandler());
+        server.createContext("/api/users/allUsers", allUserListHandler::handle);
+
+        FindUserHandler findUserHandler = new FindUserHandler(getUserService(), getObjectMapper(), getErrorHandler());
+        server.createContext("/api/users/findUser", findUserHandler::handle);
+
         HttpContext httpContext = server.createContext("/api/hello", httpExchange -> {
             if("GET".equals(httpExchange.getRequestMethod())) {
-                Map<String, List<String>> params = splitQuery(httpExchange.getRequestURI().getRawQuery());
+                Map<String, String> params = getQueryMap(httpExchange.getRequestURI().getRawQuery());
                 String noNameText = "Anonymous";
-                String name = params.getOrDefault("name", Collections.singletonList(noNameText)).stream().findFirst().orElse(noNameText);
+                String name = params.getOrDefault("name", noNameText);
                 String respText = String.format("Hello %s!", name);
                 httpExchange.sendResponseHeaders(200, respText.getBytes().length); //response code and length
                 OutputStream outputStream = httpExchange.getResponseBody();

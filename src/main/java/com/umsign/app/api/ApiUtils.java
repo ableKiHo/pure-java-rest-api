@@ -25,6 +25,16 @@ public class ApiUtils {
                 .collect(groupingBy(s -> decode(s[0]), mapping(s -> decode(s[1]), toList())));
     }
 
+    public static Map<String, String> getQueryMap(String query) {
+        if(query == null || "".equals((query))) {
+            return Collections.emptyMap();
+        }
+
+        return Pattern.compile("&").splitAsStream(query)
+                .map(s -> Arrays.copyOf(s.split("="), 2))
+                .collect(toMap(s -> decode(s[0]), s -> decode(s[1])));
+    }
+
     /*
     * splitAsStream example
     * String str = "java,scala,kotlin";
