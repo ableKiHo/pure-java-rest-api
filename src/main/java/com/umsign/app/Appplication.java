@@ -6,6 +6,7 @@ import com.sun.net.httpserver.HttpServer;
 import com.umsign.app.api.user.handler.AllUserListHandler;
 import com.umsign.app.api.user.handler.FindUserHandler;
 import com.umsign.app.api.user.handler.RegisterationHandler;
+import lombok.extern.slf4j.Slf4j;
 
 import java.io.IOException;
 import java.io.OutputStream;
@@ -18,8 +19,12 @@ import static com.umsign.app.Configuration.*;
 import static com.umsign.app.api.ApiUtils.getQueryMap;
 import static com.umsign.app.api.ApiUtils.splitQuery;
 
+@Slf4j
 public class Appplication {
+
     public static void main(String[] args) throws IOException {
+        log.info("Appplication start!");
+
         int serverPort = 8000;
         HttpServer server = HttpServer.create(new InetSocketAddress(serverPort), 0);
 
@@ -33,6 +38,7 @@ public class Appplication {
         server.createContext("/api/users/findUser", findUserHandler::handle);
 
         HttpContext httpContext = server.createContext("/api/hello", httpExchange -> {
+            log.info("call /api/hello");
             if("GET".equals(httpExchange.getRequestMethod())) {
                 Map<String, String> params = getQueryMap(httpExchange.getRequestURI().getRawQuery());
                 String noNameText = "Anonymous";
@@ -58,6 +64,8 @@ public class Appplication {
         });
         server.setExecutor(null);
         server.start();
+
+        log.info("HttpServer start!");
     }
 
 
