@@ -1,16 +1,19 @@
 package com.umsign.app;
 
 import com.sun.net.httpserver.BasicAuthenticator;
+import com.sun.net.httpserver.Filter;
 import com.sun.net.httpserver.HttpContext;
 import com.sun.net.httpserver.HttpServer;
 import com.umsign.app.api.user.handler.AllUserListHandler;
 import com.umsign.app.api.user.handler.FindUserHandler;
 import com.umsign.app.api.user.handler.RegisterationHandler;
+import com.umsign.app.filter.AccessLogFilter;
 import lombok.extern.slf4j.Slf4j;
 
 import java.io.IOException;
 import java.io.OutputStream;
 import java.net.InetSocketAddress;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -24,18 +27,19 @@ public class Appplication {
 
     public static void main(String[] args) throws IOException {
         log.info("Appplication start!");
-
+        AccessLogFilter accessLogFilter = new AccessLogFilter();
+        List<Filter> defaultFilters = Arrays.asList(new Filter[] {accessLogFilter});
         int serverPort = 8000;
         HttpServer server = HttpServer.create(new InetSocketAddress(serverPort), 0);
 
         RegisterationHandler registrationHandler = new RegisterationHandler(getUserService(), getObjectMapper(), getErrorHandler());
-        server.createContext("/api/users/register", registrationHandler::handle);
+        server.createContext("/api/users/register", registrationHandler::handle).getFilters().addAll(defaultFilters);
 
         AllUserListHandler allUserListHandler = new AllUserListHandler(getUserService(), getObjectMapper(), getErrorHandler());
-        server.createContext("/api/users/allUsers", allUserListHandler::handle);
+        server.createContext("/api/users/allUsers", allUserListHandler::handle).getFilters().addAll(defaultFilters);;
 
         FindUserHandler findUserHandler = new FindUserHandler(getUserService(), getObjectMapper(), getErrorHandler());
-        server.createContext("/api/users/findUser", findUserHandler::handle);
+        server.createContext("/api/users/findUser", findUserHandler::handle).getFilters().addAll(defaultFilters);;
 
         HttpContext httpContext = server.createContext("/api/hello", httpExchange -> {
             log.info("call /api/hello");
@@ -62,10 +66,11 @@ public class Appplication {
                 return user.equals("admin") && pwd.equals("admin");
             }
         });
+        httpContext.getFilters().addAll(defaultFilters);
         server.setExecutor(null);
         server.start();
 
-        log.info("HttpServer start!");
+        log.info("HttpServer start! Server is listening on port " + serverPort);
     }
 
 
