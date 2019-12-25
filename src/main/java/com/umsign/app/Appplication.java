@@ -8,11 +8,13 @@ import com.umsign.app.api.user.handler.AllUserListHandler;
 import com.umsign.app.api.user.handler.FindUserHandler;
 import com.umsign.app.api.user.handler.RegisterationHandler;
 import com.umsign.app.filter.AccessLogFilter;
+import com.umsign.config.DataSource;
 import lombok.extern.slf4j.Slf4j;
 
 import java.io.IOException;
 import java.io.OutputStream;
 import java.net.InetSocketAddress;
+import java.sql.SQLException;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -27,6 +29,12 @@ public class Appplication {
 
     public static void main(String[] args) throws IOException {
         log.info("Appplication start!");
+
+        try {
+            DataSource.getConnection();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
         AccessLogFilter accessLogFilter = new AccessLogFilter();
         List<Filter> defaultFilters = Arrays.asList(new Filter[] {accessLogFilter});
         int serverPort = 8000;
